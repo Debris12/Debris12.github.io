@@ -465,14 +465,14 @@
                 
                 <div class="info-break-policy">
                     <i class="far fa-file-word fa-fw"></i>文章字数:&nbsp;&nbsp;
-                    4
+                    2k
                 </div>
                 
 
                 
                 <div class="info-break-policy">
                     <i class="far fa-clock fa-fw"></i>阅读时长:&nbsp;&nbsp;
-                    1 分
+                    6 分
                 </div>
                 
 
@@ -492,10 +492,39 @@
 
         <div class="card-content article-card-content">
             <div id="articleContent">
-                <p>test123</p>
+                <p>此篇文章主要记录在使用 Axioma 优化器过后，对于组合优化器的一些想法。</p>
 <span id="more"></span>
 
-<p>测试123</p>
+<h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>可能是很久没有写东西或者更新博客的原因，最近一段时间感觉指尖一直在发痒，总想写点什么东西下来。无论是生活上还是工作上，又或者是对于某些事情的看法，都想着写点什么来记录下来。</p>
+<p>最近几个月都在做和量化投资投资相关的对接组合优化器的工作，在此期间花费了大量时间阅读优化器使用文档，API文档，使用示例等等，颇感疲惫。好在这个阶段也已经接近尾声，所做的产品功能也马上上线，因此想要在这个阶段记录下关于组合优化器的一些想法。</p>
+<h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><p>对于量化场景下的组合优化器是什么，可以从不同层面来介绍。从宽泛的角度来看，组合优化器是对于给定持仓和给定目标以及给定约束，最终返回一个新的持仓的黑盒子。在使用的过程中，我们所给优化器的无非就是初始持仓（手里有什么，现金或者持仓），目标函数（希望最大化收益或者最小化风险等等）以及约束条件（换手率不能超过200%等），通过他的黑盒子，输入给我们一个优化后的持仓。从细微的角度来看，组合优化器就是通过计算机来进行数学计算，通过优化器内部的不断计算，在满足我们约束的条件下，得出一个达到我们目标的解。</p>
+<p>如果无法理解，最简单的就是将它视为一个函数，有输入也有输出，站在使用者角度，就是一个已经定义好的函数；站在函数开发者角度，就是这个函数内部的实现，根据输入输出计算得到结果的一个过程。</p>
+<h2 id="市面上的组合优化器"><a href="#市面上的组合优化器" class="headerlink" title="市面上的组合优化器"></a>市面上的组合优化器</h2><p>笔者在组合优化器的领域同样也是涉世未深，刚好也是因为这次的工作需要才知道有组合优化器这样一个玩意，所以介绍的可能不是很全面。</p>
+<p>此次在工作上对接的是 Axioma 组合优化器，当然这个优化器是客户花钱买的，在这里吐槽一下他的 one-license 机制，在单独开发过程中倒是没有什么影响，但是在测试的过程中，调bug和测试同时进行时，就出现了抢占的问题。一旦测试同学在测试，那么开发同学就要等其操作完才能继续调试，反之亦然。</p>
+<p>在各个平台搜索 Axioma 优化器的过程中，经常看到 Barra 和其共同出现，对于 Barra 来说，由于并没有机会接触到，所以只在这里提一下，如果未来有机会接触，再写篇文章记录下。</p>
+<p>优矿平台同样也提供了组合优化的功能，并且官方提供了知识库，讲解了优化器背后相关的数学公式，有兴趣的可以直接查看知识库：<a target="_blank" rel="noopener" href="https://uqer.datayes.com/labs/knowledge/%E7%A0%94%E7%A9%B6%E7%B1%BB%E5%BA%93%2FPortfolioConstruction%2F%E7%BB%84%E5%90%88%E6%9E%84%E5%BB%BA%E7%B1%BB%E5%BA%93(%E7%AE%80%E5%8D%95%E6%9E%84%E5%BB%BA%E5%8F%8A%E4%BC%98%E5%8C%96%E5%99%A8%E6%9E%84%E5%BB%BA).nb">组合构建类库</a></p>
+<p>BigQuant上对于组合优化器也有相应的介绍，可以阅读这篇文章，简单了解其提供的功能以及如何使用：<a target="_blank" rel="noopener" href="https://bigquant.com/wiki/doc/-4qYkJ3YwD9#h-%E6%A8%A1%E5%9D%97%E4%BD%BF%E7%94%A8">投资组合优化器</a></p>
+<h2 id="组合优化器使用"><a href="#组合优化器使用" class="headerlink" title="组合优化器使用"></a>组合优化器使用</h2><p>此次我们在对接 Axioma 组合优化器时，使用的是其单期优化的功能，并没有使用它的多期优化，所以下面的讲解都是基于其单期优化过程来进行讲解。</p>
+<p>首先我们从一副宏观的图来看一下当前我们运用 Axioma进行组合优化的全局设计：</p>
+<p><img src="/images/%E7%BB%84%E5%90%88%E4%BC%98%E5%8C%96%E5%99%A8/%E6%9E%B6%E6%9E%84%E5%9B%BE.png" alt="架构图"></p>
+<p>整体流程大致为：</p>
+<ul>
+<li><p>通过需要计算的区间范围以及调仓频率，得出具体需要进行调仓的日期</p>
+</li>
+<li><p>循环每个日期，将每个日期下的股票行情，投资域股票，基准数据，因子数据，初始持仓等传入 Axioma 优化器，得到调仓权重</p>
+</li>
+<li><p>将得到的调仓权重，给到回测服务，计算区间的收益情况，以及得到区间末尾的持仓（可能发生分红、股票无法买入等情况，持仓会发生变化）</p>
+</li>
+<li><p>将回测得到的区间末尾持仓作为初始持仓，再传入优化器，进行下一轮的优化。</p>
+</li>
+</ul>
+<p>上述讲解的是使用优化器的整体流程，下面对于 Axioma 优化器自身，做一个简单介绍。</p>
+<p><img src="/images/%E7%BB%84%E5%90%88%E4%BC%98%E5%8C%96%E5%99%A8/workspace.png" alt="架构图"></p>
+<p>Axioma 优化器核心为 Workspace，在单期优化中，每个调仓日期对应一个 Workspace，在进行单期优化之前，需要手动将风险模型（可以使用 Axioma自带的风险模型数据，也可以自定义风险模型数据）、因子数据、股票投资域、Account账户数据等传入 Workspace。</p>
+<p>数据准备完毕后，下面就是 Strategy策略的构建，策略包含了两部分：目标函数 Objective和约束条件 Constraint，在约束条件中，也可以设置软约束以及软约束的放松顺序。</p>
+<p>上述和优化相关的数据以及条件准备完成后，就是 Rebalance 的构建，构建 Rebalance时需要注意设置一手有多少股（通过round_lot_size参数设置），否则优化器给出的结果都是散股。</p>
+<p>整体构建完成后就是调用<code>solve</code> 方法进行优化，如果优化器无法给出解决方案会抛出特定异常，具体异常有哪些需要自行查阅文档。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>以博主本人现阶段的认知，组合优化器本身提供的只是辅助计算，对于那些完全寄希望通过优化器优化出持仓最优解并以此进行证券买卖的用户来说，个人认为在做出真正交易时应当慎重考虑。一些商业上的优化器，由于对其内部真正运行的数学计算并不是很熟悉或者精透，因此其优化出的结果也有时让人无法理解。当然也有人会说那这就是优化器给出的最优解，我不需要去知道他内部怎么算的，只需要根据最优解去买卖即可。这种做法无法说他对或者错，他选择相信优化器，那自然需要接受优化器可能给他带来的风险，而我选择不相信优化器，那我自然也要接受可能会错过获取更加突出收益的机会。以博主本人现阶段的认知，组合优化器本身提供的只是辅助计算，对于那些完全寄希望通过优化器优化出持仓最优解并以此进行证券买卖的用户来说，个人认为在做出真正交易时应当慎重考虑。一些商业上的优化器，由于对其内部真正运行的数学计算并不是很熟悉或者精透，因此其优化出的结果也有时让人无法理解。当然也有人会说那这就是优化器给出的最优解，我不需要去知道他内部怎么算的，只需要根据最优解去买卖即可。这种做法无法说他对或者错，他选择相信优化器，那自然需要接受优化器可能给他带来的风险，而我选择不相信优化器，那我自然也要接受可能会错过获取更加突出收益的机会。</p>
 
                 
             </div>
@@ -691,7 +720,7 @@
                         <li class="tab col s6 wechat-tab waves-effect waves-light"><a href="#wechat">微 信</a></li>
                     </ul>
                     <div id="alipay">
-                        <img src="/medias/reward/alipay.jpg" class="reward-img" alt="支付宝打赏二维码">
+                        <img src="/medias/reward/alipay.png" class="reward-img" alt="支付宝打赏二维码">
                     </div>
                     <div id="wechat">
                         <img src="/medias/reward/wechat.png" class="reward-img" alt="微信打赏二维码">
@@ -748,7 +777,7 @@
                 <div class="card-content article-content">
                     <div class="summary block-with-text">
                         
-                            test123
+                            此篇文章主要记录在使用 Axioma 优化器过后，对于组合优化器的一些想法。
                         
                     </div>
                     <div class="publish-info">
@@ -1016,7 +1045,7 @@
             <br>
             
             &nbsp;<i class="fas fa-chart-area"></i>&nbsp;站点总字数:&nbsp;<span
-                class="white-color">1.8k</span>&nbsp;字
+                class="white-color">3.7k</span>&nbsp;字
             
             
             
@@ -1040,13 +1069,13 @@
             
         </div>
         <div class="col s12 m4 l4 social-link social-statis">
-    <a href="https://github.com/blinkfox" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
+    <a href="https://github.com/Debris12" class="tooltipped" target="_blank" data-tooltip="访问我的GitHub" data-position="top" data-delay="50">
         <i class="fab fa-github"></i>
     </a>
 
 
 
-    <a href="mailto:1181062873@qq.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
+    <a href="mailto:774151370@qq.com" class="tooltipped" target="_blank" data-tooltip="邮件联系我" data-position="top" data-delay="50">
         <i class="fas fa-envelope-open"></i>
     </a>
 
@@ -1056,7 +1085,7 @@
 
 
 
-    <a href="tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=1181062873" class="tooltipped" target="_blank" data-tooltip="QQ联系我: 1181062873" data-position="top" data-delay="50">
+    <a href="tencent://AddContact/?fromId=50&fromSubId=1&subcmd=all&uin=774151370" class="tooltipped" target="_blank" data-tooltip="QQ联系我: 774151370" data-position="top" data-delay="50">
         <i class="fab fa-qq"></i>
     </a>
 
